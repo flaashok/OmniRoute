@@ -233,11 +233,16 @@ export async function shutdownPool(reason: string): Promise<void> {
 }
 
 
-/** Test-only: reset cumulative metrics so assertions start from a clean slate. */
-export async function __resetBrowserPoolMetricsForTest(): Promise<void> {
-  const mod = await getMod();
-  return mod.__resetBrowserPoolMetricsForTest();
-}
+/**
+ * Test-only: reset cumulative metrics so assertions start from a clean slate.
+ *
+ * NOTE: This is async (returning `Promise<void>`) while upstream/release/v3.8.49
+ * has a sync version (`function` → `void`). The stub MUST delegate to the
+ * optional @omniroute/browser-pool package via `await getMod()`, so async is
+ * unavoidable here. During rebase, RESOLVE by keeping the async version
+ * (stub side) — the sync upstream version belongs to the full Playwright
+ * implementation that lives in the package.
+ */
 
 export async function readPageResponseBody(
   response: import("playwright").Response
