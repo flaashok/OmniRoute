@@ -36,3 +36,6 @@ export const tlsFetchPerplexity = module.tlsFetch;
 export const __setTlsFetchOverrideForTesting = module.__setTlsFetchOverrideForTesting;
 export const isCloudflareChallenge = module.isCloudflareChallenge!;
 
+export type { TlsFetchOptions, TlsFetchResult } from "./tlsClientBase.ts";
+export { TlsClientUnavailableError, TlsClientHangError, looksLikeSse } from "./tlsClientBase.ts";
+

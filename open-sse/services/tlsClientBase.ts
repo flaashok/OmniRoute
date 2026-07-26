@@ -619,12 +619,19 @@ export function createGetClient(config: {
   }> | null = null;
   let exitHookInstalled = false;
 
-  const installExitHook = (client: { close: () => Promise<void> }): void => {
+  const installExitHook = (client: { stop: () => Promise<void> }): void => {
     if (!exitHookInstalled) {
       exitHookInstalled = true;
-      process.on("exit", () => {
-        void client.close();
-      });
+      const stop = async () => {
+        try {
+          await client.stop();
+        } catch {
+          // ignore
+        }
+      };
+      process.once("beforeExit", stop);
+      process.once("SIGINT", () => { void stop(); });
+      process.once("SIGTERM", () => { void stop(); });
     }
   };
 
@@ -637,7 +644,7 @@ export function createGetClient(config: {
           new (config: Record<string, unknown>): {
             start: () => Promise<void>;
             request: (url: string, opts: Record<string, unknown>) => Promise<TlsResponseLike>;
-            close: () => Promise<void>;
+            stop: () => Promise<void>;
           };
         };
         try {
@@ -796,11 +803,15 @@ export function createTlsClientModule(config: TlsClientConfig): TlsClientModule 
       const r = await requestPromise.catch(
         (e) => ({ status: 502, headers: {}, body: String(e) }) as TlsResponseLike
       );
+      // Late-arriving bytes: tls-client-node's streamOutputPath mode does not
+      // populate the in-memory `body` field — prefer the file text when r.body
+      // is empty so the real upstream body reaches the caller (#7134).
+      const fileText = await readTextFileIfExists(path);
       await cleanupFn(path);
       return {
         status: r.status,
         headers: toHeaders(r.headers),
-        text: r.body,
+        text: fileText || r.body,
         body: null,
       };
     }

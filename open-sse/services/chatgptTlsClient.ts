@@ -43,3 +43,6 @@ export const tlsFetchChatGpt = module.tlsFetch;
 export const __setTlsFetchOverrideForTesting = module.__setTlsFetchOverrideForTesting;
 export const __tlsFetchStreamingForTesting = module.__tlsFetchStreamingForTesting!;
 
+export type { TlsFetchOptions, TlsFetchResult } from "./tlsClientBase.ts";
+export { TlsClientUnavailableError, TlsClientHangError, looksLikeSse } from "./tlsClientBase.ts";
+
