@@ -2,7 +2,7 @@
 
 ## Summary
 
-Introduces a pluggable **MemoryBackend** provider architecture with a **generic HTTP connector** that supports dynamic endpoint/query/path mapping for any REST-based memory backend (Vilona, Obsidian, Notion, custom).
+Introduces a pluggable **MemoryBackend** provider architecture with a **generic HTTP connector** that supports dynamic endpoint/query/path mapping for any REST-based memory backend (Obsidian, Notion, custom).
 
 ## Changes
 
@@ -32,15 +32,15 @@ Introduces a pluggable **MemoryBackend** provider architecture with a **generic 
 {
   "memoryEnabled": true,
   "primaryBackend": "sqlite",
-  "fallbackBackends": ["vilona"],
+  "fallbackBackends": ["obsidian"],
   "backendConfigs": {
-    "vilona": {
-      "baseUrl": "http://localhost:9099",
+    "obsidian": {
+      "baseUrl": "http://localhost:27123",
       "apiKey": "...",
       "endpoints": {
-        "search": "/api/v1/brain/memories/search",
-        "create": "/api/v1/brain/memories",
-        "get": "/api/v1/brain/memories/{memoryId}"
+        "search": "/api/v1/vault/memories/search",
+        "create": "/api/v1/vault/memories",
+        "get": "/api/v1/vault/memories/{memoryId}"
       },
       "queryParams": { "query": "q", "apiKeyId": "api_key" },
       "pathParams": { "id": "memoryId" }
@@ -53,13 +53,13 @@ Introduces a pluggable **MemoryBackend** provider architecture with a **generic 
 
 ```typescript
 // Any REST backend becomes pluggable via config
-createGenericMemoryBackend("vilona", "Vilona Brain", {
-  baseUrl: "http://localhost:9099",
-  apiKey: process.env.VILONA_KEY,
+createGenericMemoryBackend("obsidian", "Obsidian Vault", {
+  baseUrl: "http://localhost:27123",
+  apiKey: process.env.OBSIDIAN_API_KEY,
   endpoints: {
-    search: "/api/v1/brain/memories/search",
-    create: "/api/v1/brain/memories",
-    get: "/api/v1/brain/memories/{memoryId}",
+    search: "/api/v1/vault/memories/search",
+    create: "/api/v1/vault/memories",
+    get: "/api/v1/vault/memories/{memoryId}",
   },
   queryParams: { query: "q", apiKeyId: "api_key" },
   pathParams: { id: "memoryId" },
@@ -72,16 +72,16 @@ createGenericMemoryBackend("vilona", "Vilona Brain", {
 - `queryParams` — rename any query parameter (`query` → `q`, `apiKeyId` → `api_key`, etc.)
 - `pathParams` — rename path placeholders (`id` → `memoryId`)
 
-### Connecting Global `omniroute` to Vilona Brain
+### Connecting Global `omniroute` to Custom Memory Backend
 
 ```bash
 # Via environment variables (auto-registers on startup)
-export VILONA_BRAIN_URL=http://localhost:9099
-export VILONA_BRAIN_API_KEY=your-key
+export OBSIDIAN_API_URL=http://localhost:27123
+export OBSIDIAN_API_KEY=your-key
 omniroute start
 
 # Or via Settings API after startup (persists to DB)
-curl -X PUT /api/settings/memory -d '{ "primaryBackend": "vilona", ... }'
+curl -X PUT /api/settings/memory -d '{ "primaryBackend": "obsidian", ... }'
 ```
 
 ### Verification

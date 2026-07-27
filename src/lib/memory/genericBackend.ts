@@ -1,7 +1,7 @@
 /**
  * GenericMemoryBackend - Generic HTTP connector for any memory backend
  * Connects to external memory backends via REST API
- * Supports Vilona, Obsidian, Notion, custom backends, etc.
+ * Supports Obsidian, Notion, custom backends, etc.
  */
 
 import { logger } from "../../../open-sse/utils/logger.ts";
@@ -328,15 +328,6 @@ export const createGenericMemoryBackend = (
 
 /** Predefined configurations for known backends */
 export const KNOWN_BACKENDS = {
-  vilona: {
-    id: "vilona",
-    displayName: "Vilona Brain",
-    config: {
-      baseUrl: process.env.VILONA_BRAIN_URL || "http://localhost:9099",
-      apiKey: process.env.VILONA_BRAIN_API_KEY,
-      backendType: "vilona",
-    } as GenericBackendConfig,
-  },
   obsidian: {
     id: "obsidian",
     displayName: "Obsidian Vault",
