@@ -21,6 +21,7 @@ export interface MemoryFilter {
   apiKeyId?: string;
   type?: MemoryType;
   sessionId?: string;
+  query?: string;
   limit?: number;
   offset?: number;
   orderBy?: "createdAt" | "updatedAt" | "lastAccessedAt";

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireManagementAuth } from "@/lib/api/requireManagementAuth";
 import { listMemories, createMemory, getMemoryTokensUsed } from "@/lib/memory/store";
-import { memoryManager } from "@/lib/memory/manager";
+import { memoryManager } from "@/lib/memory";
 import { memoryCache } from "@/lib/memory/cache";
 import { MemoryType } from "@/lib/memory/types";
 import { parsePaginationParams, buildPaginatedResponse } from "@/shared/types/pagination";
@@ -43,6 +43,7 @@ export async function GET(request: Request) {
       apiKeyId,
       type,
       sessionId,
+      query,
       limit: paginationParams.limit,
       offset:
         offset ??
