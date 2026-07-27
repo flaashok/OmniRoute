@@ -271,25 +271,26 @@ test("chat completions streams Codex Responses reasoning through real route HTTP
     assert.equal(recorded[0].url, CODEX_RESPONSES_URL);
     assert.equal(recorded[0].method, "POST");
     assert.deepEqual(recorded[0].body.reasoning, { effort: "high", summary: "auto" });
-    assert.deepEqual(recorded[0].body.input, [
-      {
-        type: "message",
-        role: "user",
-        content: [{ type: "input_text", text: "What is the answer?" }],
-      },
-    ]);
+    // Translator may attach Responses message `status` (tip already does); assert shape.
+    assert.equal(Array.isArray(recorded[0].body.input), true);
+    const input0 = (recorded[0].body.input as Array<Record<string, unknown>>)[0];
+    assert.equal(input0?.type, "message");
+    assert.equal(input0?.role, "user");
+    assert.deepEqual(input0?.content, [{ type: "input_text", text: "What is the answer?" }]);
 
     const chunks = parseSse(raw);
     assert.equal(chunks.at(-1), "[DONE]");
     const payloads = chunks.slice(0, -1).map((chunk) => JSON.parse(chunk));
+    // #7243: encrypted-only reasoning must not fabricate client-visible
+    // reasoning_content (old #7095/#7304 placeholder is gone).
     const reasoningContentDeltas = payloads
       .map((payload) => payload.choices?.[0]?.delta?.reasoning_content)
       .filter((content): content is string => Boolean(content));
-    assert.equal(reasoningContentDeltas.length, 1);
+    assert.equal(reasoningContentDeltas.length, 0);
     const reasoningContent = reasoningContentDeltas.join("");
-    assert.match(reasoningContent, /encrypted (?:state|private reasoning)/i);
+    assert.doesNotMatch(reasoningContent, /encrypted (?:state|private reasoning)/i);
+    assert.doesNotMatch(raw, /OmniRoute cannot recover|Codex is reasoning/i);
     assert(!raw.includes(ENCRYPTED_CONTENT_SENTINEL), raw);
-    assert(!reasoningContent.includes(ENCRYPTED_CONTENT_SENTINEL), reasoningContent);
     assert(
       payloads.some((payload) => payload.choices?.[0]?.delta?.content === "The answer is 42.")
     );
