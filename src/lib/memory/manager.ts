@@ -2,6 +2,7 @@
  * MemoryManager - Singleton orchestrator for memory backends
  * Handles registration, routing, fallback, and caching
  */
+import { logger } from "../../../open-sse/utils/logger.ts";
 import type {
   MemoryBackend,
   CreateMemoryInput,
@@ -10,6 +11,7 @@ import type {
   HealthCheckResult,
 } from "./backend";
 import type { Memory } from "./types";
+const log = logger("MEMORY_MANAGER");
 type BackendRegistry = Map<string, MemoryBackend>;
 
 class MemoryManager {
@@ -31,10 +33,10 @@ class MemoryManager {
   /** Register a backend implementation */
   register(backend: MemoryBackend): void {
     if (this.backends.has(backend.id)) {
-      console.warn(`[MemoryManager] Backend "${backend.id}" already registered, overwriting`);
+      log.warn(`Backend "${backend.id}" already registered, overwriting`, { id: backend.id });
     }
     this.backends.set(backend.id, backend);
-    console.log(`[MemoryManager] Registered backend: ${backend.id} (${backend.displayName})`);
+    log.info("Registered backend", { id: backend.id, displayName: backend.displayName });
   }
 
   /** Unregister a backend */
@@ -43,10 +45,10 @@ class MemoryManager {
     if (backend?.shutdown) {
       backend
         .shutdown()
-        .catch((e) => console.error(`[MemoryManager] Shutdown error for ${backendId}:`, e));
+        .catch((e) => log.error(`Shutdown error for ${backendId}`, { error: String(e) }));
     }
     this.backends.delete(backendId);
-    console.log(`[MemoryManager] Unregistered backend: ${backendId}`);
+    log.info("Unregistered backend", { id: backendId });
   }
 
   /** Get a backend by ID */
@@ -78,9 +80,10 @@ class MemoryManager {
     }
     this.primaryBackendId = primary;
     this.fallbackBackendIds = fallbacks.filter((id) => this.backends.has(id));
-    console.log(
-      `[MemoryManager] Configured: primary=${primary}, fallbacks=[${this.fallbackBackendIds.join(", ")}]`
-    );
+    log.info("Configured backends", {
+      primary,
+      fallbacks: this.fallbackBackendIds,
+    });
   }
 
   /** Initialize all registered backends */
@@ -91,9 +94,9 @@ class MemoryManager {
       if (backend.initialize) {
         try {
           await backend.initialize();
-          console.log(`[MemoryManager] Initialized backend: ${id}`);
+          log.info("Initialized backend", { id });
         } catch (e) {
-          console.error(`[MemoryManager] Failed to initialize backend ${id}:`, e);
+          log.error(`Failed to initialize backend ${id}`, { error: String(e) });
         }
       }
     }
@@ -107,7 +110,7 @@ class MemoryManager {
         try {
           await backend.shutdown();
         } catch (e) {
-          console.error(`[MemoryManager] Shutdown error for ${id}:`, e);
+          log.error(`Shutdown error for ${id}`, { error: String(e) });
         }
       }
     }
@@ -143,7 +146,7 @@ class MemoryManager {
     for (const backend of this.getFallbackBackends()) {
       backend
         .update(id, updates)
-        .catch((e) => console.warn(`[MemoryManager] Fallback update failed for ${backend.id}:`, e));
+        .catch((e) => log.warn(`Fallback update failed for ${backend.id}`, { error: String(e) }));
     }
     return updated;
   }
@@ -156,7 +159,7 @@ class MemoryManager {
     for (const backend of this.getFallbackBackends()) {
       backend
         .delete(id)
-        .catch((e) => console.warn(`[MemoryManager] Fallback delete failed for ${backend.id}:`, e));
+        .catch((e) => log.warn(`Fallback delete failed for ${backend.id}`, { error: String(e) }));
     }
     return deleted;
   }
@@ -175,13 +178,13 @@ class MemoryManager {
     try {
       return await primary.search(config);
     } catch (primaryError) {
-      console.warn(`[MemoryManager] Primary search failed, trying fallbacks:`, primaryError);
+      log.warn("Primary search failed, trying fallbacks", { error: String(primaryError) });
 
       for (const backend of this.getFallbackBackends()) {
         try {
           return await backend.search(config);
         } catch (fallbackError) {
-          console.warn(`[MemoryManager] Fallback ${backend.id} search failed:`, fallbackError);
+          log.warn(`Fallback ${backend.id} search failed`, { error: String(fallbackError) });
         }
       }
       return [];

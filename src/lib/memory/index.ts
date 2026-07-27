@@ -2,6 +2,9 @@
  * Memory module exports and initialization
  */
 
+import { logger } from "../../../open-sse/utils/logger.ts";
+const log = logger("MEMORY");
+
 export * from "./backend";
 export * from "./manager";
 export * from "./settings";
@@ -36,6 +39,6 @@ export async function initMemoryBackends(): Promise<void> {
     memoryManager.configure(settings.primaryBackend, settings.fallbackBackends);
     await memoryManager.initialize();
   } catch (e) {
-    console.warn("[Memory] Failed to initialize backends:", e);
+    log.warn("Failed to initialize backends", { error: String(e) });
   }
 }
