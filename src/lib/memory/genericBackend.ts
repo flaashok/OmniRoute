@@ -165,8 +165,8 @@ export class GenericMemoryBackend implements MemoryBackend {
     if (filter.apiKeyId) out[qp.apiKeyId] = filter.apiKeyId;
     if (filter.type) out[qp.type] = filter.type;
     if (filter.sessionId) out[qp.sessionId] = filter.sessionId;
-    if (filter.limit) out[qp.limit] = String(filter.limit);
-    if (filter.offset) out[qp.offset] = String(filter.offset);
+    if (filter.limit !== undefined) out[qp.limit] = String(filter.limit);
+    if (filter.offset !== undefined) out[qp.offset] = String(filter.offset);
     if (filter.orderBy) out[qp.orderBy] = filter.orderBy;
     if (filter.orderDir) out[qp.orderDir] = filter.orderDir;
 
@@ -238,7 +238,10 @@ export class GenericMemoryBackend implements MemoryBackend {
     if (!this.initialized) await this.initialize();
 
     const pathParams = this.getPathParams();
-    const endpoint = this.resolveEndpoint(this.getEndpoints().get, { [pathParams.id]: id });
+    const endpoint = this.resolveEndpoint(this.getEndpoints().get, {
+      [pathParams.id]: id,
+      [pathParams.memoryId]: id,
+    });
 
     try {
       return await this.request<Memory>("GET", endpoint);
@@ -252,7 +255,10 @@ export class GenericMemoryBackend implements MemoryBackend {
     if (!this.initialized) await this.initialize();
 
     const pathParams = this.getPathParams();
-    const endpoint = this.resolveEndpoint(this.getEndpoints().update, { [pathParams.id]: id });
+    const endpoint = this.resolveEndpoint(this.getEndpoints().update, {
+      [pathParams.id]: id,
+      [pathParams.memoryId]: id,
+    });
 
     try {
       await this.request("PATCH", endpoint, updates);
@@ -267,7 +273,10 @@ export class GenericMemoryBackend implements MemoryBackend {
     if (!this.initialized) await this.initialize();
 
     const pathParams = this.getPathParams();
-    const endpoint = this.resolveEndpoint(this.getEndpoints().delete, { [pathParams.id]: id });
+    const endpoint = this.resolveEndpoint(this.getEndpoints().delete, {
+      [pathParams.id]: id,
+      [pathParams.memoryId]: id,
+    });
 
     try {
       await this.request("DELETE", endpoint);
