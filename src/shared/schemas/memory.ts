@@ -20,7 +20,7 @@ export const MemorySettingsExtendedSchema = z
     // Phase 1-2: MemoryBackend provider pattern
     primaryBackend: z.string().optional(),
     fallbackBackends: z.array(z.string()).optional(),
-    backendConfigs: z.record(z.record(z.unknown())).optional(),
+    backendConfigs: z.record(z.string(), z.record(z.string(), z.unknown())).optional(),
   })
   .strict();
 
