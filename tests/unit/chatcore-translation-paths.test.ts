@@ -930,6 +930,52 @@ test("chatCore preserves cache_control automatically for Claude Code single-mode
   assert.equal(call.body.tools[0].cache_control, undefined);
 });
 
+test("chatCore supplements a missing message cache breakpoint for native Claude Code requests", async () => {
+  await settingsDb.updateSettings({ alwaysPreserveClientCache: "auto" });
+  invalidateCacheControlSettingsCache();
+
+  const { call } = await invokeChatCore({
+    provider: "claude",
+    model: "claude-sonnet-4-6",
+    endpoint: "/v1/messages",
+    credentials: { apiKey: "claude-key", providerSpecificData: {} },
+    body: {
+      model: "claude-sonnet-4-6",
+      max_tokens: 64,
+      system: [
+        {
+          type: "text",
+          text: "stable system prompt",
+          cache_control: { type: "ephemeral", ttl: "5m" },
+        },
+        {
+          type: "text",
+          text: "stable project instructions",
+          cache_control: { type: "ephemeral", ttl: "5m" },
+        },
+      ],
+      messages: [
+        { role: "user", content: [{ type: "text", text: "first turn" }] },
+        { role: "assistant", content: [{ type: "text", text: "first response" }] },
+        { role: "user", content: [{ type: "text", text: "latest turn" }] },
+      ],
+      tools: [
+        {
+          name: "lookup_weather",
+          description: "Fetch weather",
+          input_schema: { type: "object" },
+          cache_control: { type: "ephemeral", ttl: "5m" },
+        },
+      ],
+    },
+    userAgent: "Claude-Code/1.0.0",
+    responseFormat: "claude",
+  });
+
+  assert.deepEqual(call.body.messages[2].content[0].cache_control, { type: "ephemeral" });
+  assert.equal(call.body.tools[0].cache_control, undefined);
+});
+
 test("chatCore auto cache policy becomes false for nondeterministic combos", async () => {
   await settingsDb.updateSettings({ alwaysPreserveClientCache: "auto" });
   invalidateCacheControlSettingsCache();
