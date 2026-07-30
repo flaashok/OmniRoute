@@ -53,6 +53,7 @@ import { V0VercelWebExecutor } from "./v0-vercel-web.ts";
 import { KimiWebExecutor } from "./kimi-web.ts";
 import { DoubaoWebExecutor } from "./doubao-web.ts";
 import { QwenWebExecutor } from "./qwen-web.ts";
+import { RaycastExecutor } from "./raycast.ts";
 import { HailuoWebExecutor } from "./hailuo-web.ts";
 import { ZaiWebExecutor } from "./zai-web.ts";
 import { KimiExecutor } from "./kimi.ts";
@@ -168,6 +169,8 @@ const executors = {
   "doubao-web": new DoubaoWebExecutor(),
   db: new DoubaoWebExecutor(), // Alias
   "qwen-web": new QwenWebExecutor(),
+  raycast: new RaycastExecutor(),
+  rc: new RaycastExecutor(), // Alias
   "hailuo-web": new HailuoWebExecutor(),
   "zai-web": new ZaiWebExecutor(),
   zw: new ZaiWebExecutor(), // Alias
