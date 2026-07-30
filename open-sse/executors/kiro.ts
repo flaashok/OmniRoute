@@ -699,23 +699,25 @@ export class KiroExecutor extends BaseExecutor {
                     ? ((metrics as JsonRecord).outputTokens as number)
                     : 0;
 
-                const cacheReadTokens =
-                  typeof (metrics as JsonRecord).cacheReadTokens === "number"
-                    ? ((metrics as JsonRecord).cacheReadTokens as number)
-                    : 0;
+                const cacheReadTokens = [
+                  (metrics as JsonRecord).cacheReadInputTokens,
+                  (metrics as JsonRecord).cacheReadTokens,
+                ].find((value) => typeof value === "number") as number | undefined;
 
-                const cacheCreationTokens =
-                  typeof (metrics as JsonRecord).cacheCreationTokens === "number"
-                    ? ((metrics as JsonRecord).cacheCreationTokens as number)
-                    : 0;
+                const cacheCreationTokens = [
+                  (metrics as JsonRecord).cacheWriteInputTokens,
+                  (metrics as JsonRecord).cacheCreationTokens,
+                ].find((value) => typeof value === "number") as number | undefined;
 
                 if (inputTokens > 0 || outputTokens > 0) {
                   state.usage = {
                     prompt_tokens: inputTokens,
                     completion_tokens: outputTokens,
                     total_tokens: inputTokens + outputTokens,
-                    ...(cacheReadTokens > 0 && { cache_read_input_tokens: cacheReadTokens }),
-                    ...(cacheCreationTokens > 0 && {
+                    ...((cacheReadTokens || 0) > 0 && {
+                      cache_read_input_tokens: cacheReadTokens,
+                    }),
+                    ...((cacheCreationTokens || 0) > 0 && {
                       cache_creation_input_tokens: cacheCreationTokens,
                     }),
                   };

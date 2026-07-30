@@ -241,6 +241,55 @@ test("KiroExecutor.transformEventStreamToSSE converts text, tool calls, usage an
   assert.match(text, /\[DONE\]/);
 });
 
+test("KiroExecutor normalizes Bedrock cache-token fields from a metricsEvent", async () => {
+  const executor = new KiroExecutor();
+  const response = buildEventStreamResponse([
+    buildEventFrame("assistantResponseEvent", { content: "cached" }),
+    buildEventFrame("metricsEvent", {
+      inputTokens: 7,
+      outputTokens: 2,
+      cacheReadInputTokens: 1024,
+      cacheWriteInputTokens: 256,
+    }),
+  ]);
+
+  const transformed = executor.transformEventStreamToSSE(response, "kiro-model");
+  const chunks = parseSSEJsonChunks(await transformed.text());
+  const finish = chunks.find((chunk) => chunk.choices?.[0]?.finish_reason);
+
+  assert.deepEqual(finish.usage, {
+    prompt_tokens: 7,
+    completion_tokens: 2,
+    total_tokens: 9,
+    cache_read_input_tokens: 1024,
+    cache_creation_input_tokens: 256,
+  });
+});
+
+test("KiroExecutor does not invent cache tokens for the live API-key event shape", async () => {
+  const executor = new KiroExecutor();
+  const response = buildEventStreamResponse([
+    buildEventFrame("assistantResponseEvent", {
+      content: "live-shaped response",
+      modelId: "claude-sonnet-4.5",
+    }),
+    buildEventFrame("metadataEvent", { stopReason: "END_TURN" }),
+    buildEventFrame("contextUsageEvent", { contextUsagePercentage: 4.93 }),
+    buildEventFrame("meteringEvent", {
+      unit: "credit",
+      unitPlural: "credits",
+      usage: 0.022,
+    }),
+  ]);
+
+  const transformed = executor.transformEventStreamToSSE(response, "kiro-model");
+  const chunks = parseSSEJsonChunks(await transformed.text());
+  const finish = chunks.find((chunk) => chunk.choices?.[0]?.finish_reason);
+
+  assert.equal(finish.usage.cache_read_input_tokens, undefined);
+  assert.equal(finish.usage.cache_creation_input_tokens, undefined);
+});
+
 test("KiroExecutor.transformEventStreamToSSE surfaces native reasoning frames as reasoning_content", async () => {
   const executor = new KiroExecutor();
   // Verified live wire format: Kiro streams adaptive-thinking reasoning as a
